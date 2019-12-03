@@ -1,0 +1,46 @@
+﻿<Window x:Class="HtScript.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:core="clr-namespace:System;assembly=mscorlib"
+        xmlns:local="clr-namespace:HtScript"
+        mc:Ignorable="d"
+        x:Name="window"
+        Title="MainWindow" Height="746" Width="1868">
+    <Window.Resources>
+        <ObjectDataProvider x:Key="myEnum" MethodName="GetValues" ObjectType="{x:Type core:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type Type="local:IndexChoice"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </Window.Resources>
+    <Grid>
+        <Label Content="Tabellen-Name" HorizontalAlignment="Left" Margin="24,20,0,0" VerticalAlignment="Top" Width="93"/>
+        <TextBox x:Name="tbtableName" Text="{Binding Table.Name}"  HorizontalAlignment="Left" Margin="241,22,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <Label Content="SqlScri-Pfad" HorizontalAlignment="Left" Margin="29,48,0,0" VerticalAlignment="Top" Width="90"/>
+        <TextBox x:Name="tbSqlScriPath" HorizontalAlignment="Left" Margin="246,50,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <Label Content="Datei-Suffix" HorizontalAlignment="Left" Margin="34,75,0,0" VerticalAlignment="Top" Width="87" RenderTransformOrigin="0.464,1.409"/>
+        <TextBox x:Name="tbFileSuffix" HorizontalAlignment="Left" Margin="245,78,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <Label Content="Update-Scripte, mit &quot;;&quot; getrennt" HorizontalAlignment="Left" Margin="36,103,0,0" VerticalAlignment="Top" Width="196" RenderTransformOrigin="0.464,1.409" Height="28"/>
+        <TextBox x:Name="tbUpdateScripts" HorizontalAlignment="Left" Margin="247,106,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <Label Content="Tabellen-Beschreibung" HorizontalAlignment="Left" Margin="38,138,0,0" VerticalAlignment="Top" Width="196" RenderTransformOrigin="0.464,1.409" Height="28"/>
+        <TextBox x:Name="tbTableDescription" HorizontalAlignment="Left" AcceptsReturn="True" Margin="249,141,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Height="60"/>
+        <DataGrid x:Name="dgColumns" AutoGenerateColumns="False" DataGridCell.GotFocus="DataGrid_CellGotFocus"  CanUserAddRows="False" Margin="28,254,231,148">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Typ" Binding="{Binding Type}" Width="*"/>
+                <DataGridCheckBoxColumn Header="Primary Key" Binding="{Binding PrimaryKey}" Width="*"/>
+                <DataGridCheckBoxColumn Header="Nullable" Binding="{Binding Nullable}" Width="*"/>
+                <DataGridTextColumn Header="Foreign Key zu (zum Beispiel: bewope.nr)" Binding="{Binding ForeignKeyTo}" Width="*"/>
+                <DataGridTextColumn Header="Spalten-Kommentar" Binding="{Binding Comment}" Width="*"/>
+                <DataGridComboBoxColumn Header="Index erstellen"  
+                        SelectedItemBinding="{Binding CreateIndex}" 
+                        ItemsSource="{Binding Source={StaticResource myEnum}}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <Button x:Name="btnCreateHtScript" Content="Ht-Script erstellen" HorizontalAlignment="Left" Margin="43,0,0,11" Click="btnCreateHtScript_Click" Height="28" VerticalAlignment="Bottom"/>
+
+
+    </Grid>
+</Window>
