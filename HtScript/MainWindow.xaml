@@ -16,16 +16,12 @@
         </ObjectDataProvider>
     </Window.Resources>
     <Grid>
-        <Label Content="Tabellen-Name" HorizontalAlignment="Left" Margin="24,20,0,0" VerticalAlignment="Top" Width="93"/>
-        <TextBox x:Name="tbtableName" Text="{Binding Table.Name}"  HorizontalAlignment="Left" Margin="241,22,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-        <Label Content="SqlScri-Pfad" HorizontalAlignment="Left" Margin="29,48,0,0" VerticalAlignment="Top" Width="90"/>
-        <TextBox x:Name="tbSqlScriPath" HorizontalAlignment="Left" Margin="246,50,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-        <Label Content="Datei-Suffix" HorizontalAlignment="Left" Margin="34,75,0,0" VerticalAlignment="Top" Width="87" RenderTransformOrigin="0.464,1.409"/>
-        <TextBox x:Name="tbFileSuffix" HorizontalAlignment="Left" Margin="245,78,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-        <Label Content="Update-Scripte, mit &quot;;&quot; getrennt" HorizontalAlignment="Left" Margin="36,103,0,0" VerticalAlignment="Top" Width="196" RenderTransformOrigin="0.464,1.409" Height="28"/>
-        <TextBox x:Name="tbUpdateScripts" HorizontalAlignment="Left" Margin="247,106,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-        <Label Content="Tabellen-Beschreibung" HorizontalAlignment="Left" Margin="38,138,0,0" VerticalAlignment="Top" Width="196" RenderTransformOrigin="0.464,1.409" Height="28"/>
-        <TextBox x:Name="tbTableDescription" HorizontalAlignment="Left" AcceptsReturn="True" Margin="249,141,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Height="60"/>
+        <Label Content="Project" HorizontalAlignment="Left" Margin="39,21,0,0" VerticalAlignment="Top" Width="196" RenderTransformOrigin="0.464,1.409" Height="28"/>
+        <ComboBox x:Name="cmbProject" HorizontalAlignment="Left" Margin="252,27,0,0" VerticalAlignment="Top" Width="120"/>
+        <Label Content="Tabellen-Name" HorizontalAlignment="Left" Margin="36,147,0,0" VerticalAlignment="Top" Width="93"/>
+        <TextBox x:Name="tbtableName" Text="{Binding Table.Name}"  HorizontalAlignment="Left" Margin="253,149,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <Label Content="Tabellen-Beschreibung" HorizontalAlignment="Left" Margin="44,176,0,0" VerticalAlignment="Top" Width="196" RenderTransformOrigin="0.464,1.409" Height="28"/>
+        <TextBox x:Name="tbTableDescription" Text="{Binding Table.Comment}" HorizontalAlignment="Left" AcceptsReturn="True" Margin="255,179,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Height="60"/>
         <DataGrid x:Name="dgColumns" AutoGenerateColumns="False" DataGridCell.GotFocus="DataGrid_CellGotFocus"  CanUserAddRows="False" Margin="28,254,231,148">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>

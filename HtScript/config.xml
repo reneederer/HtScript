@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config>
+  <user>EDE</user>
+  <settings>
+    <project>SENSO7</project>
+    <sqlscriPath>C:\workspace\APEX_VERW7\entw\sqlscri</sqlscriPath>
+    <updateScriptPaths>C:\workspace\APEX_VERW7\entw\sqlscri\upd_V_7_1_5_0_mdt_body.sql;C:\workspace\APEX_VERW7\entw\sqlscri\upd_V_7_1_5_0_body.sql</updateScriptPaths>
+    <primaryKeyScriptPath>C:\workspace\APEX_VERW7\entw\sqlscri\chp_v7.sql</primaryKeyScriptPath>
+    <indexScriptPath>C:\workspace\APEX_VERW7\entw\sqlscri\chx_v7.sql</indexScriptPath>
+    <foreignKeyScriptPath>C:\workspace\APEX_VERW7\entw\sqlscri\chr_v7.sql</foreignKeyScriptPath>
+    <suffix>_V7</suffix>
+  </settings>
+  <settings>
+    <project>SENSO6</project>
+    <sqlscriPath>C:\workspace\SENSO\entw\sqlscri</sqlscriPath>
+    <updateScriptPaths>C:\workspace\SENSO\entw\sqlscri\upd_6_22_0_0_mdt_body.sql;C:\workspace\SENSO\entw\sqlscri\upd_6_22_0_0_body.sql</updateScriptPaths>
+    <primaryKeyScriptPath>C:\workspace\SENSO\entw\sqlscri\chp.sql</primaryKeyScriptPath>
+    <indexScriptPath>C:\workspace\SENSO\entw\sqlscri\chx.sql</indexScriptPath>
+    <foreignKeyScriptPath>C:\workspace\SENSO\entw\sqlscri\chr.sql</foreignKeyScriptPath>
+    <suffix></suffix>
+  </settings>
+</config>
+
+

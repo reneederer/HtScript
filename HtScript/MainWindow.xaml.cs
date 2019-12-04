@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Xml.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -15,6 +16,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.ComponentModel;
+using System.Xml;
+using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace HtScript
 {
@@ -27,22 +31,22 @@ namespace HtScript
     }
     public class Config
     {
-        public string User { get; set; }
-        public string Project { get; set; }
-        public string SqlScriPath { get; set; }
-        public string UpdateScriptPaths { get; set; }
-        public string IndexScriptPath { get; set; }
-        public string ForeignKeyScriptPath { get; set; }
-        public string PrimaryKeyScriptPath { get; set; }
-        public string Suffix { get; set; }
+        public string User { get; set; } = "";
+        public string Project { get; set; } = "";
+        public string SqlScriPath { get; set; } = "";
+        public string UpdateScriptPaths { get; set; } = "";
+        public string IndexScriptPath { get; set; } = "";
+        public string ForeignKeyScriptPath { get; set; } = "";
+        public string PrimaryKeyScriptPath { get; set; } = "";
+        public string Suffix { get; set; } = "";
     }
 
-    public class Table : INotifyPropertyChanged
+    public class Table
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        public string Name { get; set; }
-        public string Comment { get; set; }
-        public ObservableCollection<TableColumn> TableColumns { get; set; }
+        public string Name { get; set; } = "";
+        public string Comment { get; set; } = "";
+        public ObservableCollection<TableColumn> TableColumns { get; set; } = new ObservableCollection<TableColumn>();
         protected void OnPropertyChanged(string name)
         {
         PropertyChangedEventHandler handler = PropertyChanged;
@@ -53,12 +57,12 @@ namespace HtScript
 
     public class TableColumn
     {
-        public string Name { get; set; }
-        public string PrimaryKey { get; set; }
-        public string Type { get; set; }
+        public string Name { get; set; } = "";
+        public bool PrimaryKey { get; set; } = false;
+        public string Type { get; set; } = "";
         public bool Nullable { get; set; } = true;
         public string Comment { get; set; } = "";
-        public string ForeignKeyTo { get; set; }
+        public string ForeignKeyTo { get; set; } = "";
         public IndexChoice CreateIndex { get; set; }
 
     }
@@ -67,10 +71,8 @@ namespace HtScript
     {
         private void DataGrid_CellGotFocus(object sender, RoutedEventArgs e)
         {
-            // Lookup for the source to be DataGridCell
             if (e.OriginalSource.GetType() == typeof(DataGridCell))
             {
-                // Starts the Edit on the row;
                 DataGrid grd = (DataGrid)sender;
                 grd.BeginEdit(e);
 
@@ -79,6 +81,29 @@ namespace HtScript
                 {
                     control.Focus();
                 }
+            }
+        }
+
+
+        private IEnumerable<Config> loadConfigs()
+        {
+            XmlDocument doc = new XmlDocument();
+            doc.Load("config.xml");
+            var user = doc.SelectSingleNode("/config/user").InnerText;
+
+            foreach (XmlNode row in doc.SelectNodes("/config/settings"))
+            {
+                yield return new Config
+                {
+                    User = user,
+                    Project = row.SelectSingleNode(".//project").InnerText,
+                    SqlScriPath = row.SelectSingleNode(".//sqlscriPath").InnerText,
+                    UpdateScriptPaths = row.SelectSingleNode(".//updateScriptPaths").InnerText,
+                    PrimaryKeyScriptPath = row.SelectSingleNode(".//primaryKeyScriptPath").InnerText,
+                    IndexScriptPath = row.SelectSingleNode(".//indexScriptPath").InnerText,
+                    ForeignKeyScriptPath = row.SelectSingleNode(".//foreignKeyScriptPath").InnerText,
+                    Suffix = row.SelectSingleNode(".//suffix").InnerText
+                };
             }
         }
 
@@ -101,33 +126,200 @@ namespace HtScript
             }
             return null;
         }
-        public Table Table { get; set; } = new Table { TableColumns = new ObservableCollection<TableColumn>(), Name = "hallo"};
-        public Config Config { get; set; } =
-            new Config { Project = "SENSO ORACLE",
-                Suffix = "",
-                User = "EDE",
-                SqlScriPath = @"c:\users\ederer\desktop\testsqlscri"
-            };
+        public Table Table { get; set; } = new Table();
+        public List<Config> Configs { get; set; }
         public MainWindow()
         {
-            for(int i = 0; i < 100; ++i)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            var enc1252 = Encoding.GetEncoding(1252);
+
+            for (int i = 0; i < 100; ++i)
             {
                 Table.TableColumns.Add(new TableColumn());
             }
             InitializeComponent();
+            Configs = loadConfigs().ToList();
+            Configs.ToList().ForEach(item => cmbProject.Items.Add(item.Project));
+            if(cmbProject.Items.Count >= 1) { cmbProject.SelectedIndex = 0; }
             DataContext = this;
             dgColumns.ItemsSource = Table.TableColumns;
         }
 
+
+        private int svnLock(string arg, bool unlock = false)
+        {
+            using (var process = new Process())
+            {
+                process.StartInfo.FileName = "svn.exe";
+                process.StartInfo.Arguments = (unlock ? "un" : "") + "lock " + arg;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                process.WaitForExit();
+                if (process.ExitCode != 0 && !unlock)
+                {
+                    svnLock(arg, true);
+                    return process.ExitCode;
+                }
+                return process.ExitCode;
+            }
+        }
+        private void svnAdd(string arg)
+        {
+            using (var process = new Process())
+            {
+                process.StartInfo.FileName = "svn.exe";
+                process.StartInfo.Arguments = "add " + arg;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                process.WaitForExit();
+                var x = process.ExitCode;
+            }
+        }
+
         private void btnCreateHtScript_Click(object sender, RoutedEventArgs e)
         {
-            var x = Table.Name;
-            File.WriteAllText("htbewope.sql", getHtScript(Config, Table));
-            File.WriteAllText("hsbewope.sql", getHsScript(Config, Table));
+            var config = Configs[cmbProject.SelectedIndex];
+            var updateScriptPaths = config.UpdateScriptPaths.Split(';').Select(x => x.Trim());
+            var quotedUpdateScripts = String.Join(' ', updateScriptPaths);
+            svnLock(quotedUpdateScripts, true);
+            if (svnLock(quotedUpdateScripts) != 0)
+            {
+                MessageBox.Show("Svn-Lock gescheitert für\r\n" + quotedUpdateScripts);
+                return;
+            }
+
+            var foreignKeyStrings = getForeignKeyStrings(Table);
+            var htScriptPath = System.IO.Path.Combine(config.SqlScriPath, ("ht" + Table.Name + config.Suffix + ".sql").ToLower());
+            var hsScriptPath = System.IO.Path.Combine(config.SqlScriPath, ("hs" + Table.Name + config.Suffix + ".sql").ToLower());
+            File.WriteAllText(htScriptPath, getHtScript(Configs[cmbProject.SelectedIndex], Table, System.IO.Path.GetFileName(htScriptPath)), Encoding.GetEncoding(1252));
+            File.WriteAllText(hsScriptPath, getHsScript(Configs[cmbProject.SelectedIndex], Table), Encoding.GetEncoding(1252));
+            var foreignKeyScriptLines = File.ReadAllLines(Configs[cmbProject.SelectedIndex].ForeignKeyScriptPath, Encoding.GetEncoding(1252));
+            var foreignKeyScriptLinesBefore =
+                foreignKeyScriptLines.TakeWhile(line => !line.ToUpper().StartsWith("ALTER TABLE ") || String.Compare(line.ToUpper(), "ALTER TABLE " + Table.Name) == -1);
+            var newForeignKeyScriptLines =
+                foreignKeyScriptLinesBefore.Concat(foreignKeyStrings.Append("")).Concat(foreignKeyScriptLines.Skip(foreignKeyScriptLinesBefore.Count()));
+            if (foreignKeyStrings.Count() >= 1)
+            {
+                File.WriteAllLines(config.ForeignKeyScriptPath, newForeignKeyScriptLines, Encoding.GetEncoding(1252));
+            }
+
+            var primaryKeyString = getPrimaryKeyString(Table);
+            var primaryKeyScriptLines = File.ReadAllLines(Configs[cmbProject.SelectedIndex].PrimaryKeyScriptPath, Encoding.GetEncoding(1252));
+            var primaryKeyScriptLinesBefore =
+                primaryKeyScriptLines.TakeWhile(line => !line.Trim().ToUpper().StartsWith("ALTER TABLE ") || String.Compare(line.ToUpper(), "ALTER TABLE " + Table.Name) == -1);
+            var newPrimaryKeyScriptLines =
+                primaryKeyScriptLinesBefore.Append(primaryKeyString).Append("").Concat(primaryKeyScriptLines.Skip(primaryKeyScriptLinesBefore.Count()));
+            if (!String.IsNullOrWhiteSpace(primaryKeyString))
+            {
+                File.WriteAllLines(config.PrimaryKeyScriptPath, newPrimaryKeyScriptLines, Encoding.GetEncoding(1252));
+            }
+
+            var indexScriptLines = File.ReadAllLines(Configs[cmbProject.SelectedIndex].IndexScriptPath, Encoding.GetEncoding(1252));
+            var indexStrings = getIndexStrings(Table);
+            if (indexStrings.Count() >= 1)
+            {
+                File.WriteAllLines(config.IndexScriptPath, insertIndexLines(indexScriptLines, indexStrings), Encoding.GetEncoding(1252));
+            }
+
+            foreach(var updateScriptPath in updateScriptPaths)
+            {
+                var content = File.ReadAllLines(updateScriptPath, Encoding.GetEncoding(1252));
+                var versionSeparatorLineNr = -1;
+                var lastLineBeforeSeparatorLineNr = -1;
+
+                for(int i = content.Length - 1; i >= 0; --i)
+                {
+                    if(content[i].Trim().ToUpper() == "-- VERSION-SEPARATOR")
+                    {
+                        versionSeparatorLineNr = i;
+                        continue;
+                    }
+                    if(versionSeparatorLineNr != -1 && content[i].Trim() != "")
+                    {
+                        lastLineBeforeSeparatorLineNr = i;
+                        break;
+                    }
+                }
+
+                var newContent =
+                    content
+                      .Take(lastLineBeforeSeparatorLineNr + 1)
+                      .Append("")
+                      .Append("@" + System.IO.Path.GetFileName(htScriptPath))
+                      .Append("@" + System.IO.Path.GetFileName(hsScriptPath))
+                      .Append(primaryKeyString)
+                      .Concat(foreignKeyStrings)
+                      .Concat(indexStrings)
+                      .Append("")
+                      .Append("")
+                      .Concat(content.Skip(versionSeparatorLineNr));
+                File.WriteAllLines(updateScriptPath, newContent, Encoding.GetEncoding(1252));
+            }
+
+            svnAdd("\"" + htScriptPath + "\" \"" + hsScriptPath + "\"");
+            svnLock(quotedUpdateScripts, true);
+            MessageBox.Show("Done");
+        }
+
+        private IEnumerable<string> insertIndexLines(IEnumerable<string> oldLines, IEnumerable<string> newLines)
+        {
+            IEnumerable<string> modifiedLines = oldLines;
+            for(int newLineIndex = 0; newLineIndex < newLines.Count(); ++newLineIndex)
+            {
+                var newLine = newLines.ToList()[newLineIndex];
+                var before =
+                    modifiedLines.TakeWhile(line => !line.Trim().ToUpper().StartsWith("CREATE ") || String.Compare(line.Substring(21).ToUpper(), newLine.Substring(21).ToUpper()) == -1);
+                var after = modifiedLines.Skip(before.Count());
+                modifiedLines =
+                    before.Append(newLine);
+                if (newLineIndex == newLines.Count() - 1)
+                {
+                    modifiedLines = modifiedLines.Append("");
+                }
+                modifiedLines = modifiedLines.Concat(after);
+            }
+            return modifiedLines;
+
+        }
+
+        private string getPrimaryKeyString(Table table)
+        {
+            var primaryKeyColumns = table.TableColumns.Where(x => x.PrimaryKey).Select(x => x.Name);
+            if (primaryKeyColumns.Count() == 1)
+            {
+                var primaryKeyColumn = primaryKeyColumns.First();
+                return "ALTER TABLE " + table.Name + " ADD CONSTRAINT PK_" + table.Name + " PRIMARY KEY(&MDTNR." + primaryKeyColumn + ") USING INDEX TABLESPACE SENSIN;";
+            }
+            else
+            {
+                return "";
+            }
         }
 
 
-        private string getHtScript(Config config, Table table)
+        private IEnumerable<string> getForeignKeyStrings(Table table)
+        {
+            foreach(var column in table.TableColumns.Where(column => !String.IsNullOrEmpty(column.ForeignKeyTo)).OrderBy(column => column.Name))
+            {
+                yield return "ALTER TABLE " + table.Name + " ADD CONSTRAINT FK_" + table.Name + "_" + column.Name +
+                             " FOREIGN KEY(&MDTNR." + column.Name + ") REFERENCES " + String.Concat(column.ForeignKeyTo.TakeWhile(c => c != '.')) + ";";
+
+            }
+        }
+        private IEnumerable<string> getIndexStrings(Table table)
+        {
+            foreach(var column in table.TableColumns.Where(column => column.CreateIndex != IndexChoice.NoIndex).OrderBy(column => column.Name))
+            {
+                var isUnique = column.CreateIndex == IndexChoice.UniqueIndex;
+                var indexName = (isUnique ? "U" : "I") + (table.Name + "_" + column.Name).PadRight(31);
+                yield return "CREATE " + (isUnique ? "UNIQUE" : "      ") + " INDEX " + indexName +
+                             " ON " + table.Name + "(&MDTNR." + column.Name + ") TABLESPACE SENSIN;";
+            }
+        }
+
+        private string getHtScript(Config config, Table table, string htScriptFile)
         {
             var lines = new List<string>();
             lines.Add("--                                   DevelopGroup (SIGMA GmbH) Erlangen");
@@ -141,11 +333,19 @@ namespace HtScript
             lines.Add("-- " + DateTime.Today.ToString("dd.MM.yyyy") + " " + config.User);
             lines.Add("-----------------------------------------------------------------------------");
             lines.Add("CREATE TABLE " + table.Name + " (");
+            var columns = table.TableColumns.Where(x => !String.IsNullOrWhiteSpace(x.Name)).ToList();
+            for(var columnIndex = 0; columnIndex < columns.Count; ++columnIndex)
+            {
+                var column = columns[columnIndex];
+                if(String.IsNullOrWhiteSpace(column.Name)) { continue; }
+                var comma = (columnIndex == table.TableColumns.Count - 1) ? "" : ",";
+                lines.Add(column.Name.PadRight(25) + column.Type.PadRight(25) +
+                          (!column.Nullable && !column.PrimaryKey ? "NOT NULL" : "        ") + comma +  (column.Comment.StartsWith("--") ? "" : "-- ") + column.Comment);
+            }
             lines.Add(");");
-            // add columns
             lines.Add("COMMENT ON TABLE " + table.Name + " IS");
             lines.Add("'" + table.Comment);
-            lines.Add("'Skript: " + config.Suffix + "';");
+            lines.Add("Skript: " + htScriptFile + "';");
             lines.Add("");
             lines.Add("-- Ende des Skripts.");
             return String.Join("\r\n", lines);
@@ -184,7 +384,6 @@ namespace HtScript
             lines.Add("-- Ende des Skripts.");
             return String.Join("\r\n", lines);
         }
-
 
     }
 }
