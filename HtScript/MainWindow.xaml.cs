@@ -44,7 +44,8 @@ namespace HtScript
     public class Table
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        public string Name { get; set; } = "";
+        private string name = "";
+        public string Name { get { return name; } set { name = value.Trim().ToUpper(); } }
         public string Comment { get; set; } = "";
         public ObservableCollection<TableColumn> TableColumns { get; set; } = new ObservableCollection<TableColumn>();
         protected void OnPropertyChanged(string name)
@@ -55,15 +56,112 @@ namespace HtScript
         }
     }
 
-    public class TableColumn
+    public class TableColumn : INotifyPropertyChanged
     {
-        public string Name { get; set; } = "";
-        public bool PrimaryKey { get; set; } = false;
-        public string Type { get; set; } = "";
-        public bool Nullable { get; set; } = true;
-        public string Comment { get; set; } = "";
-        public string ForeignKeyTo { get; set; } = "";
-        public IndexChoice CreateIndex { get; set; }
+        private string name = "";
+        private bool primaryKey = false;
+        private string type = "";
+        private bool nullable = true;
+        private string comment = "";
+        private string foreignKeyTo = "";
+        private IndexChoice createIndex = IndexChoice.NoIndex;
+        public string Name {
+            get { return name; }
+            set {
+                name = value.ToUpper().Trim();
+                if(name == "NR")
+                {
+                    PrimaryKey = true;
+                    Comment = "PK";
+                    Type = "NUMBER(12)";
+                    Nullable = true;
+                    ForeignKeyTo = "";
+                }
+                else if (name.EndsWith("NR"))
+                {
+                    PrimaryKey = false;
+                    Type = "NUMBER(12)";
+                    Comment = $"FK zu {name.Substring(0, name.EndsWith("_NR") ? name.Length - 3 : name.Length - 2) }(NR)";
+                    ForeignKeyTo = $"{name.Substring(0, name.EndsWith("_NR") ? name.Length - 3 : name.Length - 2) }.NR";
+                    Nullable = true;
+                    CreateIndex = IndexChoice.NonUniqueIndex;
+                }
+                else if(name == "AKTUELL")
+                {
+                    PrimaryKey = false;
+                    Type = "VARCHAR2(1)";
+                    Comment = "Aktuell? (j/n)";
+                    Nullable = false;
+                    CreateIndex = IndexChoice.NoIndex;
+                }
+                else if(name == "BEZEICH")
+                {
+                    PrimaryKey = false;
+                    Type = "VARCHAR2(50)";
+                    Comment = "Bezeichnung";
+                    Nullable = false;
+                    CreateIndex = IndexChoice.NoIndex;
+                }
+                else if(name == "NAME")
+                {
+                    PrimaryKey = false;
+                    Type = "VARCHAR2(50)";
+                    Comment = "Name";
+                    Nullable = false;
+                    CreateIndex = IndexChoice.NoIndex;
+                }
+                else if(name == "MANDANT_NR")
+                {
+                    PrimaryKey = false;
+                    Type = "NUMBER(5)";
+                    Comment = "Mandanten-Nummer (kenmdt.nr), für Policy-Mandant";
+                    Nullable = true;
+                    CreateIndex = IndexChoice.NoIndex;
+                }
+                else if(name == "SORT")
+                {
+                    PrimaryKey = false;
+                    Type = "NUMBER(5)";
+                    Comment = "Sortierung";
+                    Nullable = false;
+                    CreateIndex = IndexChoice.NoIndex;
+                }
+                else if(name == "KENNUNG")
+                {
+                    PrimaryKey = false;
+                    Type = "VARCHAR2(1)";
+                    Comment = "Kennung";
+                    Nullable = false;
+                    CreateIndex = IndexChoice.NoIndex;
+                }
+                else
+                {
+                    Type = "VARCHAR2(30)";
+                }
+                OnPropertyChanged("PrimaryKey");
+                OnPropertyChanged("Comment");
+                OnPropertyChanged("Type");
+                OnPropertyChanged("Nullable");
+                OnPropertyChanged("ForeignKeyTo");
+                OnPropertyChanged("CreateIndex");
+            }
+        }
+        public bool PrimaryKey { get { return primaryKey; } set { primaryKey = value; } }
+        public string Type { get { return type; } set { type = value.ToUpper(); } }
+        public bool Nullable { get { return nullable; } set { nullable = value; } }
+        public string Comment { get { return comment; } set { comment = value; } }
+        public string ForeignKeyTo { get { return foreignKeyTo; } set { foreignKeyTo = value.ToUpper(); } }
+        public IndexChoice CreateIndex { get { return createIndex; } set { createIndex = value; } }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            if (this.PropertyChanged != null)
+            {
+                this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
 
     }
 
@@ -140,9 +238,9 @@ namespace HtScript
             InitializeComponent();
             Configs = loadConfigs().ToList();
             Configs.ToList().ForEach(item => cmbProject.Items.Add(item.Project));
-            if(cmbProject.Items.Count >= 1) { cmbProject.SelectedIndex = 0; }
             DataContext = this;
             dgColumns.ItemsSource = Table.TableColumns;
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 
 
@@ -259,8 +357,7 @@ namespace HtScript
             }
 
             svnAdd("\"" + htScriptPath + "\" \"" + hsScriptPath + "\"");
-            svnLock(quotedUpdateScripts, true);
-            MessageBox.Show("Done");
+            MessageBox.Show("Fertig");
         }
 
         private IEnumerable<string> insertIndexLines(IEnumerable<string> oldLines, IEnumerable<string> newLines)
@@ -338,7 +435,7 @@ namespace HtScript
             {
                 var column = columns[columnIndex];
                 if(String.IsNullOrWhiteSpace(column.Name)) { continue; }
-                var comma = (columnIndex == table.TableColumns.Count - 1) ? "" : ",";
+                var comma = (columnIndex == columns.Count - 1) ? "" : ",";
                 lines.Add(column.Name.PadRight(25) + column.Type.PadRight(25) +
                           (!column.Nullable && !column.PrimaryKey ? "NOT NULL" : "        ") + comma +  (column.Comment.StartsWith("--") ? "" : "-- ") + column.Comment);
             }
@@ -385,5 +482,43 @@ namespace HtScript
             return String.Join("\r\n", lines);
         }
 
+        private void cmbProject_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            btnCreateHtScript.IsEnabled = true;
+        }
+
+        private void dgColumns_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            var uiElement = e.OriginalSource as UIElement;
+            if(uiElement == null)
+            {
+                return;
+            }
+            if (e.Key == Key.Enter || e.Key == Key.Down)
+            {
+                e.Handled = true;
+                uiElement.MoveFocus(new TraversalRequest(FocusNavigationDirection.Down));
+            }
+            if (e.Key == Key.Up)
+            {
+                e.Handled = true;
+                uiElement.MoveFocus(new TraversalRequest(FocusNavigationDirection.Up));
+            }
+        }
+
+        private void btnEditConfig_Click(object sender, RoutedEventArgs e)
+        {
+            using(var p = new Process())
+            {
+                p.StartInfo.FileName = @"C:\Program Files\Notepad++\notepad++.exe";
+                p.StartInfo.Arguments = System.IO.Path.Combine(System.AppContext.BaseDirectory, "config.xml");
+                MessageBox.Show("Änderungen an der Konfigurations-Datei werden erst übernommen, nachdem die Applikation neu gestartet wurde.", "Hinweis");
+                p.Start();
+            }
+        }
     }
+
+
+
+
 }

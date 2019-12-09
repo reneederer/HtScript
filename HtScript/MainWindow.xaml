@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:HtScript"
         mc:Ignorable="d"
         x:Name="window"
-        Title="MainWindow" Height="746" Width="1868">
+        Title="MainWindow" Height="770" Width="1447">
     <Window.Resources>
         <ObjectDataProvider x:Key="myEnum" MethodName="GetValues" ObjectType="{x:Type core:Enum}">
             <ObjectDataProvider.MethodParameters>
@@ -16,26 +16,28 @@
         </ObjectDataProvider>
     </Window.Resources>
     <Grid>
-        <Label Content="Project" HorizontalAlignment="Left" Margin="39,21,0,0" VerticalAlignment="Top" Width="196" RenderTransformOrigin="0.464,1.409" Height="28"/>
-        <ComboBox x:Name="cmbProject" HorizontalAlignment="Left" Margin="252,27,0,0" VerticalAlignment="Top" Width="120"/>
-        <Label Content="Tabellen-Name" HorizontalAlignment="Left" Margin="36,147,0,0" VerticalAlignment="Top" Width="93"/>
-        <TextBox x:Name="tbtableName" Text="{Binding Table.Name}"  HorizontalAlignment="Left" Margin="253,149,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-        <Label Content="Tabellen-Beschreibung" HorizontalAlignment="Left" Margin="44,176,0,0" VerticalAlignment="Top" Width="196" RenderTransformOrigin="0.464,1.409" Height="28"/>
-        <TextBox x:Name="tbTableDescription" Text="{Binding Table.Comment}" HorizontalAlignment="Left" AcceptsReturn="True" Margin="255,179,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Height="60"/>
-        <DataGrid x:Name="dgColumns" AutoGenerateColumns="False" DataGridCell.GotFocus="DataGrid_CellGotFocus"  CanUserAddRows="False" Margin="28,254,231,148">
+        <Label Content="Project" HorizontalAlignment="Left" Margin="28,21,0,0" VerticalAlignment="Top" Width="145" Height="28"/>
+        <ComboBox x:Name="cmbProject" HorizontalAlignment="Left" Margin="189,25,0,0" VerticalAlignment="Top" Width="289" SelectionChanged="cmbProject_SelectionChanged"/>
+        <Label Content="Tabellen-Name" HorizontalAlignment="Left" Margin="28,66,0,0" VerticalAlignment="Top" Width="141"/>
+        <TextBox x:Name="tbtableName" Text="{Binding Table.Name}"  HorizontalAlignment="Left" Margin="189,71,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="289"/>
+        <Label Content="Tabellen-Beschreibung" HorizontalAlignment="Left" Margin="28,111,0,0" VerticalAlignment="Top" Width="141" Height="28"/>
+        <TextBox x:Name="tbTableDescription" Text="{Binding Table.Comment}" HorizontalAlignment="Left" AcceptsReturn="True" Margin="189,116,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="289" Height="92"/>
+        <DataGrid x:Name="dgColumns" AutoGenerateColumns="False" DataGridCell.GotFocus="DataGrid_CellGotFocus"  CanUserAddRows="False" Margin="28,235,28,89" PreviewKeyDown="dgColumns_PreviewKeyDown">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
-                <DataGridTextColumn Header="Typ" Binding="{Binding Type}" Width="*"/>
-                <DataGridCheckBoxColumn Header="Primary Key" Binding="{Binding PrimaryKey}" Width="*"/>
-                <DataGridCheckBoxColumn Header="Nullable" Binding="{Binding Nullable}" Width="*"/>
-                <DataGridTextColumn Header="Foreign Key zu (zum Beispiel: bewope.nr)" Binding="{Binding ForeignKeyTo}" Width="*"/>
-                <DataGridTextColumn Header="Spalten-Kommentar" Binding="{Binding Comment}" Width="*"/>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                <DataGridTextColumn Header="Typ" Binding="{Binding Type, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                <DataGridCheckBoxColumn Header="Primary Key" Binding="{Binding PrimaryKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                <DataGridCheckBoxColumn Header="Nullable" Binding="{Binding Nullable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                <DataGridTextColumn Header="Foreign Key zu" Binding="{Binding ForeignKeyTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                <DataGridTextColumn Header="Spalten-Kommentar" Binding="{Binding Comment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
                 <DataGridComboBoxColumn Header="Index erstellen"  
-                        SelectedItemBinding="{Binding CreateIndex}" 
-                        ItemsSource="{Binding Source={StaticResource myEnum}}" Width="*"/>
+                        SelectedItemBinding="{Binding CreateIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                        ItemsSource="{Binding Source={StaticResource myEnum}}" Width="*">
+                </DataGridComboBoxColumn>
             </DataGrid.Columns>
         </DataGrid>
-        <Button x:Name="btnCreateHtScript" Content="Ht-Script erstellen" HorizontalAlignment="Left" Margin="43,0,0,11" Click="btnCreateHtScript_Click" Height="28" VerticalAlignment="Bottom"/>
+        <Button x:Name="btnCreateHtScript" Content="Ht-Script erstellen" HorizontalAlignment="Left" IsEnabled="False" Margin="28,0,0,28" Click="btnCreateHtScript_Click" Height="28" VerticalAlignment="Bottom"/>
+        <Button x:Name="btnEditConfig" Content="Konfiguration" Margin="1319,28,28,0" VerticalAlignment="Top" Click="btnEditConfig_Click"/>
 
 
     </Grid>
