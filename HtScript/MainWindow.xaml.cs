@@ -19,6 +19,7 @@ using System.ComponentModel;
 using System.Xml;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Collections.Specialized;
 
 namespace HtScript
 {
@@ -47,12 +48,11 @@ namespace HtScript
         private string name = "";
         public string Name { get { return name; } set { name = value.Trim().ToUpper(); } }
         public string Comment { get; set; } = "";
-        public ObservableCollection<TableColumn> TableColumns { get; set; } = new ObservableCollection<TableColumn>();
+        public BindingList<TableColumn> TableColumns { get; set; } = new BindingList<TableColumn>();
         protected void OnPropertyChanged(string name)
         {
         PropertyChangedEventHandler handler = PropertyChanged;
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(name));
+            PropertyChanged(this, new PropertyChangedEventArgs(name));
         }
     }
 
@@ -76,12 +76,12 @@ namespace HtScript
                     Type = "NUMBER(12)";
                     Nullable = true;
                     ForeignKeyTo = "";
+                    CreateIndex = IndexChoice.NoIndex;
                 }
                 else if (name.EndsWith("NR"))
                 {
                     PrimaryKey = false;
                     Type = "NUMBER(12)";
-                    Comment = $"FK zu {name.Substring(0, name.EndsWith("_NR") ? name.Length - 3 : name.Length - 2) }(NR)";
                     ForeignKeyTo = $"{name.Substring(0, name.EndsWith("_NR") ? name.Length - 3 : name.Length - 2) }.NR";
                     Nullable = true;
                     CreateIndex = IndexChoice.NonUniqueIndex;
@@ -139,50 +139,46 @@ namespace HtScript
                     Type = "VARCHAR2(30)";
                 }
                 OnPropertyChanged("PrimaryKey");
-                OnPropertyChanged("Comment");
                 OnPropertyChanged("Type");
                 OnPropertyChanged("Nullable");
-                OnPropertyChanged("ForeignKeyTo");
                 OnPropertyChanged("CreateIndex");
             }
         }
         public bool PrimaryKey { get { return primaryKey; } set { primaryKey = value; } }
         public string Type { get { return type; } set { type = value.ToUpper(); } }
         public bool Nullable { get { return nullable; } set { nullable = value; } }
-        public string Comment { get { return comment; } set { comment = value; } }
-        public string ForeignKeyTo { get { return foreignKeyTo; } set { foreignKeyTo = value.ToUpper(); } }
+        public string Comment {
+            get { return comment; }
+            set { comment = value;
+                OnPropertyChanged("Comment");
+            }
+        }
+        public string ForeignKeyTo {
+            get { return foreignKeyTo; }
+            set {
+                foreignKeyTo = value.ToUpper();
+                var dotIndex = foreignKeyTo.IndexOf(".");
+                if (foreignKeyTo.IndexOf(".") >= 0)
+                {
+                    Comment = $"FK zu {foreignKeyTo.Substring(0, dotIndex)}({foreignKeyTo.Substring(dotIndex + 1)})";
+                    var x = Comment;
+                }
+                OnPropertyChanged("ForeignKeyTo");
+            }
+        }
         public IndexChoice CreateIndex { get { return createIndex; } set { createIndex = value; } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)
         {
-            if (this.PropertyChanged != null)
-            {
-                this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
 
     }
 
     public partial class MainWindow : Window
     {
-        private void DataGrid_CellGotFocus(object sender, RoutedEventArgs e)
-        {
-            if (e.OriginalSource.GetType() == typeof(DataGridCell))
-            {
-                DataGrid grd = (DataGrid)sender;
-                grd.BeginEdit(e);
-
-                Control control = GetFirstChildByType<Control>(e.OriginalSource as DataGridCell);
-                if (control != null)
-                {
-                    control.Focus();
-                }
-            }
-        }
-
-
         private IEnumerable<Config> loadConfigs()
         {
             XmlDocument doc = new XmlDocument();
@@ -205,25 +201,6 @@ namespace HtScript
             }
         }
 
-        private T GetFirstChildByType<T>(DependencyObject prop) where T : DependencyObject
-        {
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(prop); i++)
-            {
-                DependencyObject child = VisualTreeHelper.GetChild((prop), i) as DependencyObject;
-                if (child == null)
-                    continue;
-
-                T castedProp = child as T;
-                if (castedProp != null)
-                    return castedProp;
-
-                castedProp = GetFirstChildByType<T>(child);
-
-                if (castedProp != null)
-                    return castedProp;
-            }
-            return null;
-        }
         public Table Table { get; set; } = new Table();
         public List<Config> Configs { get; set; }
         public MainWindow()
@@ -231,16 +208,23 @@ namespace HtScript
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             var enc1252 = Encoding.GetEncoding(1252);
 
+
             for (int i = 0; i < 100; ++i)
             {
                 Table.TableColumns.Add(new TableColumn());
             }
             InitializeComponent();
+            Table.TableColumns.ListChanged += tableColumnsChanged;
+
             Configs = loadConfigs().ToList();
             Configs.ToList().ForEach(item => cmbProject.Items.Add(item.Project));
             DataContext = this;
             dgColumns.ItemsSource = Table.TableColumns;
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
+        private void tableColumnsChanged(object sender, ListChangedEventArgs e)
+        {
+            enableSubmitButton();
         }
 
 
@@ -484,7 +468,7 @@ namespace HtScript
 
         private void cmbProject_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            btnCreateHtScript.IsEnabled = true;
+            enableSubmitButton();
         }
 
         private void dgColumns_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -494,15 +478,20 @@ namespace HtScript
             {
                 return;
             }
-            if (e.Key == Key.Enter || e.Key == Key.Down)
+            else if (e.Key == Key.Enter || e.Key == Key.Down)
             {
                 e.Handled = true;
                 uiElement.MoveFocus(new TraversalRequest(FocusNavigationDirection.Down));
             }
-            if (e.Key == Key.Up)
+            else if (e.Key == Key.Up)
             {
                 e.Handled = true;
                 uiElement.MoveFocus(new TraversalRequest(FocusNavigationDirection.Up));
+            }
+            else if (e.Key == Key.Tab && (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)))
+            {
+                e.Handled = true;
+                uiElement.MoveFocus(new TraversalRequest(FocusNavigationDirection.Left));
             }
         }
 
@@ -515,6 +504,19 @@ namespace HtScript
                 MessageBox.Show("Änderungen an der Konfigurations-Datei werden erst übernommen, nachdem die Applikation neu gestartet wurde.", "Hinweis");
                 p.Start();
             }
+        }
+
+        private void tbtableName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            enableSubmitButton();
+        }
+
+        private void enableSubmitButton()
+        {
+            btnCreateHtScript.IsEnabled =
+                cmbProject.SelectedIndex >= 0
+                && !String.IsNullOrWhiteSpace(tbtableName.Text)
+                && Table.TableColumns.Where(x => !String.IsNullOrWhiteSpace(x.Name)).Count() >= 1;
         }
     }
 

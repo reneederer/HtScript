@@ -2,7 +2,7 @@
 <config>
   <user>EDE</user>
   <settings>
-    <project>SENSO7</project>
+    <project>SENSO 7 Verwaltung</project>
     <sqlscriPath>C:\workspace\APEX_VERW7\entw\sqlscri</sqlscriPath>
     <updateScriptPaths>C:\workspace\APEX_VERW7\entw\sqlscri\upd_V_7_1_5_0_mdt_body.sql;C:\workspace\APEX_VERW7\entw\sqlscri\upd_V_7_1_5_0_body.sql</updateScriptPaths>
     <primaryKeyScriptPath>C:\workspace\APEX_VERW7\entw\sqlscri\chp_v7.sql</primaryKeyScriptPath>
@@ -11,7 +11,7 @@
     <suffix>_V7</suffix>
   </settings>
   <settings>
-    <project>SENSO6</project>
+    <project>SENSO 6</project>
     <sqlscriPath>C:\workspace\SENSO\entw\sqlscri</sqlscriPath>
     <updateScriptPaths>C:\workspace\SENSO\entw\sqlscri\upd_6_22_0_0_mdt_body.sql;C:\workspace\SENSO\entw\sqlscri\upd_6_22_0_0_body.sql</updateScriptPaths>
     <primaryKeyScriptPath>C:\workspace\SENSO\entw\sqlscri\chp.sql</primaryKeyScriptPath>

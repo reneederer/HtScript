@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:HtScript"
         mc:Ignorable="d"
         x:Name="window"
-        Title="MainWindow" Height="770" Width="1447">
+        Title="Datenbank-Tabelle erstellen" Height="770" Width="1447">
     <Window.Resources>
         <ObjectDataProvider x:Key="myEnum" MethodName="GetValues" ObjectType="{x:Type core:Enum}">
             <ObjectDataProvider.MethodParameters>
@@ -17,27 +17,43 @@
     </Window.Resources>
     <Grid>
         <Label Content="Project" HorizontalAlignment="Left" Margin="28,21,0,0" VerticalAlignment="Top" Width="145" Height="28"/>
-        <ComboBox x:Name="cmbProject" HorizontalAlignment="Left" Margin="189,25,0,0" VerticalAlignment="Top" Width="289" SelectionChanged="cmbProject_SelectionChanged"/>
+        <ComboBox x:Name="cmbProject" HorizontalAlignment="Left" Margin="189,25,0,0" VerticalAlignment="Top" Width="289" Height="20" SelectionChanged="cmbProject_SelectionChanged"/>
         <Label Content="Tabellen-Name" HorizontalAlignment="Left" Margin="28,66,0,0" VerticalAlignment="Top" Width="141"/>
-        <TextBox x:Name="tbtableName" Text="{Binding Table.Name}"  HorizontalAlignment="Left" Margin="189,71,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="289"/>
+        <TextBox x:Name="tbtableName" Text="{Binding Table.Name}"  HorizontalAlignment="Left" Margin="189,71,0,0" Height="18" TextWrapping="Wrap" VerticalAlignment="Top" Width="289" TextChanged="tbtableName_TextChanged"/>
         <Label Content="Tabellen-Beschreibung" HorizontalAlignment="Left" Margin="28,111,0,0" VerticalAlignment="Top" Width="141" Height="28"/>
         <TextBox x:Name="tbTableDescription" Text="{Binding Table.Comment}" HorizontalAlignment="Left" AcceptsReturn="True" Margin="189,116,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="289" Height="92"/>
-        <DataGrid x:Name="dgColumns" AutoGenerateColumns="False" DataGridCell.GotFocus="DataGrid_CellGotFocus"  CanUserAddRows="False" Margin="28,235,28,89" PreviewKeyDown="dgColumns_PreviewKeyDown">
+        <DataGrid x:Name="dgColumns" AutoGenerateColumns="False" CanUserAddRows="False" Margin="28,235,28,89" PreviewKeyDown="dgColumns_PreviewKeyDown">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
                 <DataGridTextColumn Header="Typ" Binding="{Binding Type, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
-                <DataGridCheckBoxColumn Header="Primary Key" Binding="{Binding PrimaryKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
-                <DataGridCheckBoxColumn Header="Nullable" Binding="{Binding Nullable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                <DataGridTemplateColumn Header="Primary Key" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding PrimaryKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Nullable" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding Nullable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Foreign Key zu" Binding="{Binding ForeignKeyTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
                 <DataGridTextColumn Header="Spalten-Kommentar" Binding="{Binding Comment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
-                <DataGridComboBoxColumn Header="Index erstellen"  
-                        SelectedItemBinding="{Binding CreateIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                        ItemsSource="{Binding Source={StaticResource myEnum}}" Width="*">
-                </DataGridComboBoxColumn>
+                <DataGridTemplateColumn Header="Index erstellen" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox SelectedItem="{Binding CreateIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      ItemsSource="{Binding Source={StaticResource myEnum}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
-        <Button x:Name="btnCreateHtScript" Content="Ht-Script erstellen" HorizontalAlignment="Left" IsEnabled="False" Margin="28,0,0,28" Click="btnCreateHtScript_Click" Height="28" VerticalAlignment="Bottom"/>
-        <Button x:Name="btnEditConfig" Content="Konfiguration" Margin="1319,28,28,0" VerticalAlignment="Top" Click="btnEditConfig_Click"/>
+        <Button x:Name="btnCreateHtScript" Content="Dateien schreiben" HorizontalAlignment="Left" IsEnabled="False" Margin="28,0,0,28" Click="btnCreateHtScript_Click" Height="28" VerticalAlignment="Bottom" Width="169"/>
+        <Button x:Name="btnEditConfig" Content="Konfiguration" Margin="1319,28,28,0" VerticalAlignment="Top" Click="btnEditConfig_Click" Height="28"/>
 
 
     </Grid>
