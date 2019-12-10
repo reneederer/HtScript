@@ -182,9 +182,21 @@ namespace HtScript
         private IEnumerable<Config> loadConfigs()
         {
             XmlDocument doc = new XmlDocument();
-            doc.Load("config.xml");
+            try
+            {
+                doc.Load("config.xml");
+            } catch(Exception err)
+            {
+                MessageBox.Show("Fehler beim Laden der Konfigurations-Datei:\r\n\r\n" + err.ToString());
+                using (var p = new Process())
+                {
+                    p.StartInfo.FileName = @"C:\Program Files\Notepad++\notepad++.exe";
+                    p.StartInfo.Arguments = System.IO.Path.Combine(System.AppContext.BaseDirectory, "config.xml");
+                    p.Start();
+                }
+                Application.Current.Shutdown();
+            }
             var user = doc.SelectSingleNode("/config/user").InnerText;
-
             foreach (XmlNode row in doc.SelectNodes("/config/settings"))
             {
                 yield return new Config
